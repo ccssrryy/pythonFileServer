@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import mimetypes
 import os
 import socket
 
@@ -80,7 +81,7 @@ class ConnHandler(Handler, object):
             self.onConnectionLost()
             return
         if not os.path.exists(path):
-            self.socket.send("HTTP/1.1 404 Not Found\r\n\r\n<html><title>404</title><body>404 not found</body></html>")
+            self.socket.send("HTTP/1.1 404 Not Found\r\n\r\n<html><title>404</title><body>404 not found:%s</body></html>"%path)
             self.socket.close()
             self.onConnectionLost()
             return
@@ -90,14 +91,19 @@ class ConnHandler(Handler, object):
             body += "<html><title>%s</title><body>"%path
             subs.append("..")
             subs.sort()
+            fs.sort()
             for s in subs:
                 t = os.path.join(folder, s)
                 p = t.split("/")[-1]
-                body += "<a href='%s'><i>%s</i></a></br>" % (urllib2.quote(t), p)
+                body += "<a href='%s'><i>%s</i></a></br>" % (urllib2.quote(t)[1:], p)
             for f in fs:
                 t = os.path.join(folder, f)
                 p = t.split("/")[-1]
-                body += "<a href='%s'><b>%s</b></a></br>" % (urllib2.quote(t), p)
+                mim=mimetypes.guess_type(p)[0]
+                if False:#mim.find("video")!=-1:
+                    body+="<h3>%s</h3><video title='%s' controls ><source src=\"%s\" type=\"%s\"></video></br>"%(p,p,urllib2.quote(t),mim)
+                else:
+                    body += "<a href='%s'><b>%s</b></a></br>" % (urllib2.quote(t)[1:], p)
             body += "</body></html>"
             self.socket.send("HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (len(body), body))
             self.socket.close()
