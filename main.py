@@ -103,7 +103,7 @@ class ConnHandler(Handler, object):
                 if False:#mim.find("video")!=-1:
                     body+="<h3>%s</h3><video title='%s' controls ><source src=\"%s\" type=\"%s\"></video></br>"%(p,p,urllib2.quote(t),mim)
                 else:
-                    body += "<a href='%s'><b>%s</b></a></br>" % (urllib2.quote(t)[1:], p)
+                    body += "<a href='%s'><b>%s</b><i>(%s)</i></a></br>" % (urllib2.quote(t)[1:], p,m_size(os.path.getsize(t)))
             body += "</body></html>"
             self.socket.send("HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s" % (len(body), body))
             self.socket.close()
@@ -204,6 +204,19 @@ def main():
             for w in ws:
                 socket_handler_dict[w].onReadyWrite()
 
+
+def m_size(size):
+    a = ['b', 'k', 'm', 'g']
+    if size == 0:
+        return '0b'
+    r = ''
+    for i in range(0,4):
+        e = size % 1024
+        r = str(e) + a[i] + r
+        size >>= 10
+        if size == 0:
+            break
+    return r
 
 if __name__ == "__main__":
     main()
