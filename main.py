@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import argparse
 import mimetypes
 import os
 import socket
@@ -8,7 +9,12 @@ import urllib2
 from cStringIO import StringIO
 from sets import Set
 
-port = 8000
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--port', help='port number', type=int, default=8000)
+parser.add_argument('-d', '--dir', help='work dir', type=str, default='./')
+args = parser.parse_args()
+port = args.port
+os.chdir(args.dir)
 ip = "0.0.0.0"
 wlist = Set()
 rlist = Set()
@@ -88,7 +94,10 @@ class ConnHandler(Handler, object):
         if os.path.isdir(path):
             folder, subs, fs = os.walk(path).next()
             body = ""
-            body += "<html><title>%s</title><body>"%path
+            body += "<html>" \
+                    "<title>%s</title>" \
+                    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />" \
+                    "<body>" % path
             subs.append("..")
             subs.sort()
             fs.sort()
