@@ -24,6 +24,15 @@ socket_handler_dict = dict()  # type:{socket.socket:Handler}
 class Handler(object):
     def __init__(self, soc):
         self.socket = soc  # type:socket.socket
+        self.requestLine = ''  # type: str
+        self._cachedRecvData = ''  # type: str
+        self._cachedSendData = ''  # type: str
+        self.head_line = ''  # type: str
+        self.header = dict()  # type: dict
+        self.file = None  # type:file
+        self.start = 0  # type:int
+        self.end = -1  # type:int
+        self.size_sent = 0  # type:int
 
     def onConnectionMade(self):
         raise NotImplementedError()
@@ -39,15 +48,6 @@ class Handler(object):
 
 
 class ConnHandler(Handler, object):
-    requestLine = ''  # type: str
-    _cachedRecvData = ''  # type: str
-    _cachedSendData = ''  # type: str
-    head_line = ''  # type: str
-    header = dict()  # type: dict
-    file = None  # type:file
-    start = 0  # type:int
-    end = -1  # type:int
-    size_sent = 0  # type:int
 
     def onConnectionMade(self):
         print "connection made from ", self.socket.getpeername()
