@@ -24,15 +24,6 @@ socket_handler_dict = dict()  # type:{socket.socket:Handler}
 class Handler(object):
     def __init__(self, soc):
         self.socket = soc  # type:socket.socket
-        self.requestLine = ''  # type: str
-        self._cachedRecvData = ''  # type: str
-        self._cachedSendData = ''  # type: str
-        self.head_line = ''  # type: str
-        self.header = dict()  # type: dict
-        self.file = None  # type:file
-        self.start = 0  # type:int
-        self.end = -1  # type:int
-        self.size_sent = 0  # type:int
 
     def onConnectionMade(self):
         raise NotImplementedError()
@@ -48,9 +39,22 @@ class Handler(object):
 
 
 class ConnHandler(Handler, object):
+    def __init__(self,soc):
+        super(ConnHandler,self).__init__(soc)
+        self.requestLine = ''  # type: str
+        self._cachedRecvData = ''  # type: str
+        self._cachedSendData = ''  # type: str
+        self.head_line = ''  # type: str
+        self.header = dict()  # type: dict
+        self.file = None  # type:file
+        self.start = 0  # type:int
+        self.end = -1  # type:int
+        self.size_sent = 0  # type:int
+        self.peername = ()
 
     def onConnectionMade(self):
         print "connection made from ", self.socket.getpeername()
+        self.peername = self.socket.getpeername()
 
     def onError(self, e):
         print e
@@ -141,7 +145,7 @@ class ConnHandler(Handler, object):
     def onConnectionLost(self):
         if self.file:
             self.file.close()
-        print "connection lost "
+        print "connection lost ",self.peername
         try:
             wlist.remove(self.socket)
         except:
@@ -191,7 +195,6 @@ def main():
             for r in rs:
                 if r == server:
                     con, addr = r.accept()
-                    print "connected from " + str(con.getpeername())
                     socket_handler_dict[con] = ConnHandler(con)  # type:Handler
                     rlist.add(con)
                     # connection made
@@ -200,10 +203,10 @@ def main():
                 try:
                     data = r.recv(2048)
                     if not data:
-                        print "connection lost from ", r.getpeername()
                         rlist.remove(r)
                         # connection lost
                         socket_handler_dict[r].onConnectionLost()
+                        print "connection lost from peer ", r.peername
                         continue
                     # process data
                     socket_handler_dict[r].onDataRecv(data)
