@@ -8,6 +8,7 @@ import select
 import urllib2
 from cStringIO import StringIO
 from sets import Set
+import signal
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--port', help='port number', type=int, default=8000)
@@ -197,9 +198,16 @@ class ConnHandler(Handler, object):
 
 
 server = socket.socket()
+def close_server(*args):
+    server.close()
+    print "server closed"
 
+def init_signal():
+    signal.signal(signal.SIGINT, close_server)
 
 def main():
+    init_signal()
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((ip, port))
     server.setblocking(False)
     server.listen(50)
