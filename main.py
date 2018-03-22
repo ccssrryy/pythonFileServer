@@ -214,7 +214,7 @@ def main():
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((ip, port))
     server.setblocking(False)
-    server.listen(50)
+    server.listen(5)
     rlist.add(server)
     while True:
         rs, ws, xs = select.select(rlist, wlist, [])
