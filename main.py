@@ -9,10 +9,12 @@ import urllib2
 from cStringIO import StringIO
 from sets import Set
 import signal
+import logging
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--port', help='port number', type=int, default=8000)
 parser.add_argument('-d', '--dir', help='work dir', type=str, default='./')
+parser.add_argument('-l ', '--loglevel', help='log level', type=str, default='DEBUG')
 parser.add_argument('-u', '--user', help='username', type=str, default='admin')
 parser.add_argument('-k', '--key', help='key', type=str, default='admin')
 args = parser.parse_args()
@@ -24,7 +26,9 @@ ip = "0.0.0.0"
 wlist = Set()
 rlist = Set()
 socket_handler_dict = dict()  # type:{socket.socket:Handler}
-
+logging.basicConfig(level=getattr(logging, args.loglevel),
+                    format="%(asctime)s - [%(levelname)s]: %(message)s")
+_logger = logging.getLogger()
 
 class Handler(object):
     def __init__(self, soc):
@@ -58,11 +62,11 @@ class ConnHandler(Handler, object):
         self.peername = ()
 
     def onConnectionMade(self):
-        print "connection made from ", self.socket.getpeername()
+        _logger.debug("connection made from %s", self.socket.getpeername())
         self.peername = self.socket.getpeername()
 
     def onError(self, e):
-        print e
+        _logger.debug(e)
 
     def onDataRecv(self, data):
         if len(self._cachedRecvData) > 2048:
@@ -161,7 +165,7 @@ class ConnHandler(Handler, object):
     def onConnectionLost(self):
         if self.file:
             self.file.close()
-        print "connection lost ",self.peername
+        _logger.debug("connection lost %s",self.peername)
         try:
             wlist.remove(self.socket)
         except:
@@ -200,7 +204,7 @@ class ConnHandler(Handler, object):
 server = socket.socket()
 def close_server(*args):
     server.close()
-    print "server closed"
+    _logger.debug("server closed")
 
 def init_signal():
     signal.signal(signal.SIGINT, close_server)
@@ -229,12 +233,12 @@ def main():
                         rlist.remove(r)
                         # connection lost
                         socket_handler_dict[r].onConnectionLost()
-                        print "connection lost from peer ", r.peername
+                        _logger.debug("connection lost from peer %s", r.peername)
                         continue
                     # process data
                     socket_handler_dict[r].onDataRecv(data)
-                except Exception, e:
-                    print e
+                except Exception as e:
+                    _logger.debug(e.args)
         if ws:
             for w in ws:
                 socket_handler_dict[w].onReadyWrite()
