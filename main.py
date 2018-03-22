@@ -17,6 +17,7 @@ parser.add_argument('-d', '--dir', help='work dir', type=str, default='./')
 parser.add_argument('-l ', '--loglevel', help='log level', type=str, default='DEBUG')
 parser.add_argument('-u', '--user', help='username', type=str, default='admin')
 parser.add_argument('-k', '--key', help='key', type=str, default='admin')
+parser.add_argument('-a', '--auth', help='need auth if value is not 0', type=int, default=0)
 parser.add_argument('-c', '--concurrency', help='the number of workers', type=int, default=3)
 args = parser.parse_args()
 user = args.user
@@ -92,19 +93,20 @@ class ConnHandler(Handler, object):
         for l in c.readlines():
             k, v = l.split(":", 1)  # type: str
             self.header[k.strip()] = v.strip()
-        if self.header.has_key("Authorization"):
-            t = self.header.get("Authorization").split(" ")
-            method = t[0]
-            k = t[1]
-            k = base64.b64decode(k).split(":")
-            if k[0] != user or k[1] != key:
-                self.socket.send("HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic\r\n\r\n")
-                self.socket.close()
-                self.onConnectionLost()
+        if args.auth:
+            if self.header.has_key("Authorization"):
+                t = self.header.get("Authorization").split(" ")
+                method = t[0]
+                k = t[1]
+                k = base64.b64decode(k).split(":")
+                if k[0] != user or k[1] != key:
+                    self.socket.send("HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic\r\n\r\n")
+                    self.close()
+                    return
+            else:
+                self.socket.send("HTTP/1.1 401 Authorization Required\r\nWWW-Authenticate: Basic\r\n\r\n")
+                self.close()
                 return
-        else:
-            self.socket.send("HTTP/1.1 401 Authorization Required\r\nWWW-Authenticate: Basic\r\n\r\n")
-            return
         if not self.head_line.startswith("GET"):
             self.socket.send("HTTP/1.1 405 forbidden\r\n\r\nsorrys!request method is not supported!")
             self.close()
