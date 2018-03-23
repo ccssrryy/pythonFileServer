@@ -232,7 +232,6 @@ def init_signal():
     signal.signal(signal.SIGINT, close_server)
 
 
-@shutdown
 def main():
     init_signal()
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -263,7 +262,7 @@ def main():
                         rlist.remove(r)
                         # connection lost
                         socket_handler_dict[r].onConnectionLost()
-                        _logger.debug("connection lost from peer %s", r.peername)
+                        _logger.debug("connection lost from peer %s", socket_handler_dict[r].peername)
                         continue
                     # process data
                     socket_handler_dict[r].onDataRecv(data)
