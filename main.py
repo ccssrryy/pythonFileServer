@@ -5,6 +5,7 @@ import os
 import socket
 import base64
 import select
+import sys
 import urllib2
 from cStringIO import StringIO
 from sets import Set
@@ -226,6 +227,7 @@ def shutdown(f):
 def close_server(*args):
     server.close()
     _logger.debug("server closed")
+    sys.exit(0)
 
 
 def init_signal():
@@ -238,7 +240,7 @@ def main():
     server.bind((ip, port))
     server.listen(5)
     rlist.add(server)
-    for i in range(0, args.concurrency):
+    for i in range(0, args.concurrency-1):
         pid = os.fork()
         if pid == 0:  # child process
             break
